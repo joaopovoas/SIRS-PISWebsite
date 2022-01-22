@@ -9,21 +9,20 @@ services:
     restart: always
   
     networks:
-      app_net:
-        ipv4_address: 172.19.1.2
+      sirs-merchantwebsite_app_net:
+        ipv4_address: 172.18.1.2
   mysql-db:
     build: ./Database
     networks:
-     - app_net
+      sirs-merchantwebsite_app_net:
+        ipv4_address: 172.18.1.4
     restart: always
     ports:
       # <Port exposed> : < MySQL Port running inside container>
       - '3306'
-      - '8765'
     expose:
       # Opens port 3306 on the container
       - '3306'
-      - '8765'
       # Where our data will be persisted
     volumes:
       - my-db:/var/lib/mysql
@@ -41,21 +40,21 @@ services:
     ports: 
       - '80'
       - '8765'
+      - '8755'
     expose:
       - '80'
       - '8765'
+      - '8755'
     volumes:
       - nginx:/var/lib/nginx
     networks:
-      app_net:
-        ipv4_address: 172.19.1.3
+      sirs-merchantwebsite_app_net:
+        ipv4_address: 172.18.1.3
   # Names our volume
 volumes:
   my-db:
   nginx:
 networks:
-  app_net:
-    driver: bridge
-    ipam:
-     config:
-        - subnet: 172.19.1.0/16
+  sirs-merchantwebsite_app_net:
+    external: true
+

@@ -1,5 +1,5 @@
 from flask import Blueprint
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, make_response, send_from_directory
 from flask_login import login_required, current_user
 from functools import wraps
 from . import admin_login_required, db, get_user_role
@@ -7,6 +7,11 @@ from .models import Item
 from .messages import update_msgs
 
 main = Blueprint('main', __name__)
+app = Flask(__name__)
+
+@app.route("/static/<path:path>")
+def static_dir(path):
+    return send_from_directory("static", path)
 
 
 @main.route('/')
@@ -73,6 +78,13 @@ def edit_item(id):
     item = Item.query.filter_by(id=id).first()
 
     return render_template('edit_item.html', role = get_user_role(), item = item)
+
+
+@main.route('/transaction/<id>')
+def transaction(id):
+    #transactionID = Transaction.query.filter_by(transactionID=id).first()
+
+    return render_template('transaction.html')
 
 
 @main.route('/edit_item/<id>', methods = ["POST"])

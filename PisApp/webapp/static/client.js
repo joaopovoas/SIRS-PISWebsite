@@ -292,11 +292,8 @@ var TransactionStrongAuth = function (protocolInstance) {
 function protocol(email, password, transactionID) {
     paymentInfo = { email: email, password: password, transactionID: transactionID }
 
-    var exampleSocket = new WebSocket("ws://172.19.1.3:8765");
+    var exampleSocket = new WebSocket("ws://172.18.1.3:8765");
     //window.location.href
-
-    var protocol = new PaymentProtocol(exampleSocket, paymentInfo)
-
 
     exampleSocket.onopen = function (event) {
         //console.log(event.data)
@@ -321,6 +318,8 @@ function protocol(email, password, transactionID) {
     exampleSocket.onerror = function (error) {
         console.log(`[error] ${error.message}`);
     };
+
+    var protocol = new PaymentProtocol(exampleSocket, paymentInfo)
     
     return protocol
 

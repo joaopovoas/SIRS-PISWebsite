@@ -1,3 +1,4 @@
+from ast import Expression
 import os
 import asyncio
 from string import printable
@@ -24,27 +25,70 @@ from communication import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.types import Integer, Text, String
+from sqlalchemy.types import Integer, Text, String, BigInteger, Float
 from sqlalchemy import Column
+import uuid
 
 Base = declarative_base()
 
-engine = create_engine(
-    'mysql://usr:password@' + os.environ["host"] + '/test',
-    echo=True
-)
-Session = sessionmaker(bind=engine)
-session = Session()
 
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
     email = Column(String(100), unique=True, nullable=False)
     password = Column(String(97), nullable=False)
-    role = Column(String(50), default = "standard", nullable=False)
+    role = Column(String(50), default="standard", nullable=False)
+
+
+class Transaction(Base):
+    __tablename__ = 'transaction'
+    id = Column(Integer, primary_key=True)
+    transactionID = Column(String(97), unique=True, nullable=False)
+    bank_account = Column(String(97), nullable=False)
+    price = Column(Float, nullable=False)
+    currency = Column(String(97), nullable=False)
+    paid_by_email = Column(String(100), default="UNPAID", nullable=False)
+
+
+'''
+class StrongAuthentication(Base):
+    __tablename__ = 'strong_authentication'
+    id = Column(Integer, primary_key=True)
+    email = Column(String(100), default="UNPAID", nullable=False)
+    transactionID = Column(String(97), unique=True, nullable=False)
+    token = Column(String(100), nullable=False)
+    expiration = Column(BigInteger, nullable=False)
+'''
+
+
+
+engine = create_engine(
+    'mysql://usr:password@' + os.environ["host"] + '/test',
+    echo=True
+)
+
+Base.metadata.create_all(engine)
+
+Session = sessionmaker(bind=engine)
+session = Session()
+
+
+def verify_login(email, password):
+    user = session.query(User).filter_by(email=email).first()
+    ph = PasswordHasher()
+
+    if not user:
+        return False
+
+    try:
+        ph.verify(user.password, password)
+        return True
+    except:
+        return False
+
 
 async def merchantHandler(websocket):
-    currentTimestamp = getTimestamp()- 100
+    currentTimestamp = getTimestamp() - 100
     private_key = ''
     with open("/code/webapp/certs/pis.key", "rb") as key_file:
         private_key = load_pem_private_key(key_file.read(), None)
@@ -56,8 +100,8 @@ async def merchantHandler(websocket):
     print(request)
 
     if request["data"]["message"] == "GET CERTIFICATE":
-        with open("certs/pis.crt", "r") as cert:
-            #cert = load_pem_x509_certificate(bytes(cert, 'utf-8'))
+        with open("/code/webapp/certs/pis.crt", "r") as cert:
+            # cert = load_pem_x509_certificate(bytes(cert, 'utf-8'))
             currentTimestamp, response = createPacket(
                 {"message": cert.read()}, 'RAW', signer=private_key.sign)
             await websocket.send(response)
@@ -76,25 +120,24 @@ async def merchantHandler(websocket):
         print("PIS certificate is invalid")
         return
 
-    cert = load_pem_x509_certificate(bytes(response["data"]["message"], 'utf-8'))
-
-    
+    cert = load_pem_x509_certificate(
+        bytes(response["data"]["message"], 'utf-8'))
 
     # ---- SecretKey exchange ----
 
     aes_key = os.urandom(16)
     aes_iv = os.urandom(16)
 
-    data = {"key" : base64.b64encode(aes_key).decode(), "iv" : base64.b64encode(aes_iv).decode()}
+    data = {"key": base64.b64encode(aes_key).decode(
+    ), "iv": base64.b64encode(aes_iv).decode()}
 
-    
     cipher = Cipher(algorithms.AES(aes_key), modes.CFB(aes_iv))
     encryptor = cipher.encryptor()
 
-    currentTimestamp, response = createPacket(data, 'RSA', encryptor=cert.public_key().encrypt, signer=private_key.sign)
+    currentTimestamp, response = createPacket(
+        data, 'RSA', encryptor=cert.public_key().encrypt, signer=private_key.sign)
 
     await websocket.send(response)
-
 
     # ----- Create transaction ----
 
@@ -103,31 +146,20 @@ async def merchantHandler(websocket):
         request, currentTimestamp, 'AES', cipher.decryptor(), verifier=cert.public_key().verify)
     print(request)
 
+    transactionID = str(uuid.uuid4())
+    token = Transaction(transactionID=transactionID,
+                        bank_account=request["data"]["bankAccount"],
+                        price=request["data"]["price"],
+                        currency=request["data"]["currency"])
+    session.add(token)
+    session.commit()
 
 
-    response = {"transactionID": "89423432434"}
+    response = {"transactionID": transactionID}
     currentTimestamp, response = createPacket(
         response, 'AES', encryptor=cipher.encryptor(), signer=private_key.sign)
 
     await websocket.send(response)
-
-
-
-
-def verify_login(email, password):
-    user = session.query(User).filter_by(email=email).first()
-    ph = PasswordHasher()
-
-    if not user:
-       return False
-
-    try:
-        ph.verify(user.password, password)
-        return True
-    except:
-        return False
-
-
 
 
 async def clientHandler(websocket):
@@ -144,7 +176,7 @@ async def clientHandler(websocket):
 
     if request["data"]["message"] == "GET CERTIFICATE":
         with open("/code/webapp/certs/pis.crt", "r") as cert:
-            #cert = load_pem_x509_certificate(bytes(cert, 'utf-8'))
+            # cert = load_pem_x509_certificate(bytes(cert, 'utf-8'))
             currentTimestamp, response = createPacket(
                 {"message": cert.read()}, 'RAW', signer=private_key.sign)
             await websocket.send(response)
@@ -177,11 +209,11 @@ async def clientHandler(websocket):
         request, currentTimestamp, 'AES', cipher.decryptor())
     print(request)
 
-    reponse ={}
+    reponse = {}
 
     if(verify_login(request["data"]["email"], request["data"]["password"])):
         response = {"message": "ACCEPTED"}
-    else :
+    else:
         response = {"message": "BAD CREDENTIALS"}
 
     currentTimestamp, response = createPacket(
@@ -191,12 +223,31 @@ async def clientHandler(websocket):
 
     # --------- 2FA ----
 
+    import random
+    import string
+
+    letters = string.digits
+    token2FA = ''.join(random.choice(letters) for i in range(5))
+
+    expiration = getTimestamp() + 5*60*1000
+    '''
+    token = StrongAuthentication(email=request["data"]["email"], token=token2FA, transactionID=request["data"]["transactionID"], expiration=expiration)
+    session.add(token)
+    session.commit()
+    '''
+
     request = await websocket.recv()
     currentTimestamp, request = parsePacket(
         request, currentTimestamp, 'AES', cipher.decryptor())
     print(request)
 
-    response = {"message": "PAID"}
+    if(request["data"]["2FAToken"] != token2FA):
+        response = {"message": "WRONG 2FA TOKEN"}
+    elif expiration < getTimestamp():
+        response = {"message": "2FA TOKEN EXPIRED"}
+    else:
+        response = {"message": "PAID"}
+
     currentTimestamp, response = createPacket(
         response, 'AES', cipher.encryptor(), signer=private_key.sign)
 

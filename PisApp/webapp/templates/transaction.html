@@ -3,7 +3,10 @@
 <script src="https://cdn.jsdelivr.net/npm/node-forge@1.0.0/dist/forge.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-base64@3.7.2/base64.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
-<script src="http://kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js"></script>
+<script src="https://kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js"></script>
+<script src="{{url_for('static', filename='client.js')}}"></script>
+<script src="{{url_for('static', filename='dynamic.js')}}"></script>
+
 
 <html>
 
@@ -14,14 +17,10 @@
     <title>SIRS WebSockets Client</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css" />
 
-    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="{{url_for('static', filename='main.css')}}" />
 </head>
 
 <body>
-
-    <script src="client.js"></script>
-    <script src="dynamic.js"></script>
-
     <section class="hero is-primary is-fullheight has-background-black">
         <div class="hero-head">
             <nav class="navbar is-danger">
@@ -60,7 +59,7 @@
                     <div class="page">
                         <div class="box">
                             <form id="myForm2FA">
-                                <input class="input is-medium" type="text" id="email" name="email"
+                                <input class="input is-medium" type="text" id="2fa" name="2fa"
                                     placeholder="2FA Token"><br><br>
 
                                 <input id="myBtn2FA" class="button is-block is-info is-medium is-fullwidth" value="Validate">

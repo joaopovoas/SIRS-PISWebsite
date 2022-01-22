@@ -12,3 +12,7 @@ docker compose launches both the db and the web servers
 docker build creates the container, which can then be run with docker run *tag*.
 
 HamstringRestraining
+
+# Run insecure Websocket in HTTPS connection
+
+![alt text](https://cdn.discordapp.com/attachments/843918038348202038/934553240912134144/unknown.png)

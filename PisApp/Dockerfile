@@ -17,6 +17,7 @@ RUN pip install -r requirements.txt
 
 EXPOSE 5001
 EXPOSE 8765
+EXPOSE 8755
 COPY . .
 RUN chmod +x /code/start.sh
 CMD ["/code/start.sh"]
