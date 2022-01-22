@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %} Marketplace {% endblock %}
+
+{% block content %} 
+    {{error_msg}} 
+      
+<table class="table table-striped">
+    <tr>
+        <td class="table-catalog">
+            <ul class="list-group">
+            {% for element in catalog %}
+                <li class="list-group-item catalog-list">
+                    <table class="table-responsive">
+                        <tr>
+                            <a href="/marketplace/{{element.id}}">{{element.name}}</a>
+                        </tr>
+                    </table>
+                </li>
+            {% endfor %}
+            </ul>
+        </td>
+    </tr>
+</table>
+{% endblock %}

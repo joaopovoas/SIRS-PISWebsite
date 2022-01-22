@@ -1,0 +1,11 @@
+flask
+argon2_cffi
+mysqlclient
+flask-sqlalchemy 
+flask-login
+gunicorn
+Werkzeug
+websockets
+cryptography
+pyOpenSSL
+pycryptodome
