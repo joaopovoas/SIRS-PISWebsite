@@ -33,15 +33,20 @@ var PaymentProtocol = function (socket, paymentInfo) {
     this.paymentInfo = paymentInfo
     this.currentTimestamp = Date.now()
 
-    this.verifyPacket = function (packet) {
-        // initialize
-        var sig = new KJUR.crypto.Signature({"alg": "SHA256withRSA"});
-        // initialize for signature validation
-        sig.init(forge.pki.certificateToPem(this.paymentInfo["pisCert"])); // signer's certificate
-        // update data
-        sig.updateString(JSON.stringify(packet["data"]))
-        // verify signature
-        var verified = sig.verify(packet["hash"])
+    this.verifyPacket = function (packet, signature) {
+
+        var verified = false
+
+        if(signature == 'RSA'){
+            var sig = new KJUR.crypto.Signature({ "alg": "SHA256withRSA" });
+            sig.init(forge.pki.certificateToPem(this.paymentInfo["pisCert"])); 
+            sig.updateString(JSON.stringify(packet["data"]))
+            verified = sig.verify(packet["hash"])
+        } else if (signature == 'HASH') {
+            md = forge.md.sha256.create();
+            md.update(JSON.stringify(packet["data"]));
+            verified = packet["hash"] == md.digest().toHex();
+        }
 
         console.log("\t[+] Signature and integrity verified: " + verified)
 
@@ -49,7 +54,7 @@ var PaymentProtocol = function (socket, paymentInfo) {
             return false
         }
 
-        if (packet["data"]["timestamp"] <= this.currentTimestamp) {
+        if (packet["data"]["timestamp"] < this.currentTimestamp) {
             return false
         }
 
@@ -96,7 +101,7 @@ var PaymentProtocol = function (socket, paymentInfo) {
 
     this.step = function () {
 
-        if(!this.currentState.canStep())
+        if (!this.currentState.canStep())
             return
 
         let packet = {};
@@ -148,6 +153,19 @@ var PaymentProtocol = function (socket, paymentInfo) {
     };
 }
 
+
+var ProtocolStopped = function (protocolInstance) {
+    this.canStep = function () {
+        return false;
+    }
+    this.step = function () {
+        console.log("[-] Protocol stopped")
+    }
+    this.process = function (data) {
+        console.log("[-] Protocol stopped")
+    }
+};
+
 var CertificateAcquisition = function (protocolInstance) {
     this.step = function () {
         console.log("[+] CertificateAcquisition")
@@ -169,11 +187,16 @@ var CertificateAcquisition = function (protocolInstance) {
         try {
             protocolInstance.paymentInfo["pisCert"] = forge.pki.certificateFromPem(packet["data"]["message"]);
         } catch (e) {
-            console.error('\t[+] Failed to load CA certificate (' + e.message || e + ')')
+            console.error('\t[-] Failed to load CA certificate (' + e.message || e + ')')
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            updateInterface(false, 'Failed to load CA certificate')
             return
         }
 
-        if (!protocolInstance.verifyPacket(packet)) {
+        if (!protocolInstance.verifyPacket(packet, 'HASH')) {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] Packet was altered or resent')
+            updateInterface(false, 'Packet was altered or resent')
             return
         }
 
@@ -181,7 +204,9 @@ var CertificateAcquisition = function (protocolInstance) {
             let verified = caCert.verify(protocolInstance.paymentInfo["pisCert"]);
             console.log('\t[+] CA Verification of cert: ' + verified);
         } catch (e) {
-            console.error('\t[+] Failed to verify certificate (' + e.message || e + ')')
+            console.error('\t[-] Failed to verify certificate (' + e.message || e + ')')
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            updateInterface(false, 'Failed to verify certificate')
             return
         }
 
@@ -210,13 +235,24 @@ var KeyExchange = function (protocolInstance) {
 
     this.process = function (data) {
         let packet = protocolInstance.AESDecryption(data)
-   
 
-        if (!protocolInstance.verifyPacket(packet)) {
+        if (!protocolInstance.verifyPacket(packet, 'RSA')) {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] Packet was altered or resent')
+            updateInterface(false, 'Packet was altered or resent')
             return
         }
 
         console.log("\t[+] Key exchange status: " + JSON.stringify(packet["data"]));
+
+        if (packet["data"]["message"] != 'OK') {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] Failed Key exchange')
+            updateInterface(false, 'Failed Key exchange')
+            return
+        }
+
+
         protocolInstance.change(new TransactionExecution(protocolInstance));
     }
 
@@ -243,8 +279,26 @@ var TransactionExecution = function (protocolInstance) {
         let packet = protocolInstance.AESDecryption(data)
 
 
-        if (!protocolInstance.verifyPacket(packet)) {
+        if (!protocolInstance.verifyPacket(packet, 'RSA')) {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] Packet was altered or resent')
+            updateInterface(false, 'Packet was altered or resent')
             return
+        }
+
+        if (packet["data"]["message"] == 'INVALID TRANSACTION ID') {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] INVALID TRANSACTION ID')
+            updateInterface(false, 'Invalid Transaction ID')
+            return
+        }
+        else if (packet["data"]["message"] == 'BAD CREDENTIALS') {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] BAD CREDENTIALS')
+            updateInterface(false, 'Credentials do not match a registered user')
+            return
+        } else {
+            updateInterface(true, 'TransactionID and user credentials are valid, check your email for 2FA token')
         }
 
         console.log("\t[+] Transaction validation: " + JSON.stringify(packet["data"]));
@@ -273,10 +327,28 @@ var TransactionStrongAuth = function (protocolInstance) {
 
     this.process = function (data) {
         let packet = protocolInstance.AESDecryption(data)
-        
-        if (!protocolInstance.verifyPacket(packet)) {
+
+        if (!protocolInstance.verifyPacket(packet, 'RSA')) {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] Packet was altered or resent')
+            updateInterface(false, 'Packet was altered or resent')
             return
         }
+
+        if (packet["data"]["message"] == 'WRONG 2FA TOKEN') {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] WRONG 2FA TOKEN')
+            updateInterface(false, '2FA Token does not match')
+            return
+        }
+        else if (packet["data"]["message"] == '2FA TOKEN EXPIRED') {
+            protocolInstance.change(new ProtocolStopped(protocolInstance))
+            console.error('\t[-] 2FA TOKEN EXPIRED')
+            updateInterface(false, '2FA Token has expired')
+            return
+        }else {
+            updateInterface(true, '2FA Token Accepted and transaction has been processed')
+        }   
 
         console.log("\t[+] Transaction result : " + JSON.stringify(packet["data"]));
     }
@@ -303,6 +375,7 @@ function protocol(email, password, transactionID) {
     exampleSocket.onmessage = function (event) {
         protocol.process(event.data)
         protocol.step()
+
     }
 
     exampleSocket.onclose = function (event) {
@@ -314,34 +387,14 @@ function protocol(email, password, transactionID) {
             console.log('[close] Connection died');
         }
     };
-    
+
     exampleSocket.onerror = function (error) {
         console.log(`[error] ${error.message}`);
     };
 
     var protocol = new PaymentProtocol(exampleSocket, paymentInfo)
-    
+
     return protocol
 
 }
-
-
-
-/*exampleSocket.onopen = function (event) {
-    var keypair = rsa.generateKeyPair({bits: 2048, e: 0x10001});
-
-    var cert = forge.pki.createCertificate();
-
-    cert.publicKey = keypair.publicKey;
-
-
-    cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date();
-    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
-    cert.sign(keypair.privateKey);
-
-
-    exampleSocket.send(forge.pki.certificateToPem(cert))
-};*/
-
 

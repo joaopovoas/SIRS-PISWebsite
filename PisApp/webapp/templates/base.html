@@ -5,21 +5,25 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Merchant Website</title>
+    <title>Payment Initiation Service Website</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css" />
 </head>
 
 <body>
-    <section class="hero is-primary is-fullheight has-background-black">
+    <section class="hero is-primary is-fullheight has-background-grey">
         <div class="hero-head">
             <nav class="navbar is-danger">
                 <div class="container">
                     <div id="navbarMenuHeroA" class="navbar-menu">
+                        <div class="navbar-start">
+                            <a href="/" class="navbar-brand">
+                                Payment Initiation Service
+                            </a>
+                        </div>
                         <div class="navbar-end">
                             <a href="/" class="navbar-item">
                                 Home
                             </a>
-
                             {% if role == "default" or role == "admin" %}
                             <a href="/profile" class="navbar-item">
                                 Profile
@@ -27,6 +31,10 @@
 
                             <a href="/logout" class="navbar-item">
                                 Logout
+                            </a>
+
+                            <a href="/transactions" class="navbar-item">
+                                Transactions
                             </a>
 
                             {% else %}
@@ -42,13 +50,9 @@
                             <a href="/admin" class="navbar-item">
                                 Admin
                             </a>
-                            <a href="/create_item" class="navbar-item">
-                                Create Item
-                            </a>
+       
                             {% endif %}
-                            <a href="/marketplace" class="navbar-item">
-                                Marketplace
-                            </a>
+                            
                         </div>
                     </div>
                 </div>

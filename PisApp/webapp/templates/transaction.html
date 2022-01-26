@@ -21,61 +21,118 @@
 </head>
 
 <body>
-    <section class="hero is-primary is-fullheight has-background-black">
+    <section class="hero is-primary is-fullheight has-background-grey">
         <div class="hero-head">
             <nav class="navbar is-danger">
                 <div class="container">
                     <div id="navbarMenuHeroA" class="navbar-menu">
+                        <div class="navbar-start">
+                            <a href="/" class="navbar-brand">
+                                Payment Initiation Service
+                            </a>
+                        </div>
                         <div class="navbar-end">
+                            <a href="/" class="navbar-item">
+                                Home
+                            </a>
+                            {% if role == "default" or role == "admin" %}
+                            <a href="/profile" class="navbar-item">
+                                Profile
+                            </a>
 
+                            <a href="/logout" class="navbar-item">
+                                Logout
+                            </a>
+
+                            <a href="/transactions" class="navbar-item">
+                                Transactions
+                            </a>
+
+                            {% else %}
+                            <a href="/login" class="navbar-item">
+                                Login
+                            </a>
+                            <a href="/register" class="navbar-item">
+                                Sign Up
+                            </a>
+                            {% endif %}
+
+                            {% if role == "admin" %}
+                            <a href="/admin" class="navbar-item">
+                                Admin
+                            </a>
+
+                            {% endif %}
+                            
                         </div>
                     </div>
                 </div>
             </nav>
         </div>
 
-        <div class="hero-body">
-            <div class="container has-text-centered">
 
+        <section class="hero is-primary is-fullheight has-background-black">
+            <div class="hero-head">
+                <nav class="navbar is-danger">
+                    <div class="container">
+                        <div id="navbarMenuHeroA" class="navbar-menu">
+                            <div class="navbar-end">
 
-                <div class="column is-4 is-offset-4">
-                    <h3 class="title">Confirm Transaction</h3>
-                    <div class="page is-active">
-                        <div class="box">
-
-                            <form id="myForm">
-                                <input class="input is-medium" type="text" id="email" name="email"
-                                    placeholder="Your email"><br><br>
-
-                                <input class="input is-medium" type="password" id="password" name="password"
-                                    placeholder="Your Password"><br><br>
-
-                                <input id="myBtn" class="button is-block is-info is-medium is-fullwidth" value="Login">
-                            </form>
-
+                            </div>
                         </div>
                     </div>
+                </nav>
+            </div>
 
-                    <div class="page">
-                        <div class="box">
-                            <form id="myForm2FA">
-                                <input class="input is-medium" type="text" id="2fa" name="2fa"
-                                    placeholder="2FA Token"><br><br>
+            <div class="hero-body">
+                <div class="container has-text-centered">
 
-                                <input id="myBtn2FA" class="button is-block is-info is-medium is-fullwidth" value="Validate">
-                            </form>
 
+                    <div class="column is-4 is-offset-4">
+                        <h3 class="title">Confirm Transaction</h3>
+                        <h3 class="title">{{transactionID}}</h3>
+                        <h3 class="title">{{price}}</h3>
+                        <h3 class="title">{{currency}}</h3>
+                        <div class="page is-active">
+                            <div class="box">
+
+                                <form id="myForm">
+                                    <input class="input is-medium" type="text" id="email" name="email"
+                                        placeholder="Your email"><br><br>
+
+                                    <input class="input is-medium" type="password" id="password" name="password"
+                                        placeholder="Your Password"><br><br>
+
+                                    <input id="myBtn" class="button is-block is-info is-medium is-fullwidth"
+                                        value="Login">
+                                </form>
+
+                            </div>
                         </div>
+
+                        <div class="page">
+                            <div class="box">
+                                <form id="myForm2FA">
+                                    <input class="input is-medium" type="text" id="2fa" name="2fa"
+                                        placeholder="2FA Token"><br><br>
+
+                                    <input id="myBtn2FA" class="button is-block is-info is-medium is-fullwidth"
+                                        value="Validate">
+                                </form>
+
+                            </div>
+                        </div>
+
+                        <div id="messages" class="notification"></div>
+
+
+
+
                     </div>
-
-
-
 
                 </div>
-
             </div>
-        </div>
-    </section>
+        </section>
 </body>
 
 </html>

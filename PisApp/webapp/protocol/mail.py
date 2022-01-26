@@ -9,7 +9,7 @@ def send_verification(email, token):
     receiver_email = email  # Enter receiver address
     password = "HcH!tM2g*MX&6Em*"
     message = """\
-    Subject: Hi there
+    Subject: Hi there\n
 
     This is your 2FA token : %s""" % (token)
 

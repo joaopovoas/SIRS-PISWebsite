@@ -11,6 +11,9 @@ class User(db.Model, UserMixin):
     cardinfo = db.Column(db.String(600), nullable=False)
     infosalt = db.Column(db.String(50), nullable=False)
     role = db.Column(db.String(50), default = "standard", nullable=False)
+    token = db.Column(db.String(60))
+    timestamp = db.Column(db.DateTime)
+
 
 class Transaction(db.Model):
     __tablename__ = 'transaction'
@@ -23,16 +26,9 @@ class Transaction(db.Model):
 
 
 
-class Item(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    description = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float(), nullable=False)
-    type = db.Column(db.String(100), nullable=False)
-
-
 
 
 def init(app):
     with app.app_context():
         db.create_all()
+        
