@@ -9,3 +9,4 @@ websockets
 cryptography
 pyOpenSSL
 pycryptodome
+Flask-Mail

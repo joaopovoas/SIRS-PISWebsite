@@ -135,7 +135,7 @@ var PaymentProtocol = function (socket, paymentInfo) {
 
     this.start = function () {
         // 16 => AES-128
-        this.paymentInfo["key"] = forge.random.getBytesSync(16);
+        this.paymentInfo["key"] = forge.random.getBytesSync(32);
         this.paymentInfo["iv"] = forge.random.getBytesSync(16);
 
         this.encryptCipher = forge.cipher.createCipher('AES-CFB', this.paymentInfo["key"]);

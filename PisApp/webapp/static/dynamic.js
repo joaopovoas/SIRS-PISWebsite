@@ -10,13 +10,12 @@ window.onload = () => {
         
         var elements = document.getElementById("myForm").elements;
 
-        var currentUrl = window.location.href;
+        var transactionID = window.location.href.split('/').pop();
 
-        //let params = (new URL(url)).searchParams;
-        //console.log(params.get('name'))
+   
 
 
-        protocolInstance = protocol(elements.item(0).value, elements.item(1).value, "<transactionid>")
+        protocolInstance = protocol(elements.item(0).value, elements.item(1).value, transactionID)
     });
 
     document.getElementById("myBtn2FA").addEventListener('click', () => {

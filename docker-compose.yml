@@ -7,7 +7,8 @@ services:
     environment:
       host: 'mysql-db'
     restart: always
-  
+    depends_on:
+      - "mysql-db"
     networks:
       sirs-merchantwebsite_app_net:
         ipv4_address: 172.18.1.2
@@ -28,7 +29,7 @@ services:
       - my-db:/var/lib/mysql
 
     environment:
-      MYSQL_DATABASE: 'test'
+      MYSQL_DATABASE: 'testpis'
       # So you don't have to use root, but you can if you like
       MYSQL_USER: 'usr'
       # You can use whatever password you like
