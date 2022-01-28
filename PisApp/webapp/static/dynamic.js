@@ -24,6 +24,8 @@ window.onload = () => {
         
         SwitchPage(page_id);*/
         var elements = document.getElementById("myForm2FA").elements;
+        document.getElementById("myBtn2FA").parentNode.parentNode.parentNode.classList.remove('is-active');
+
 
         protocolInstance.paymentInfo["2FAToken"] = elements.item(0).value
         protocolInstance.step()

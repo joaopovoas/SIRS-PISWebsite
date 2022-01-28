@@ -31,7 +31,7 @@ var PaymentProtocol = function (socket, paymentInfo) {
     this.currentState = new CertificateAcquisition(this);
     this.socket = socket
     this.paymentInfo = paymentInfo
-    this.currentTimestamp = Date.now()
+    this.currentTimestamp = Date.now() - 5000
 
     this.verifyPacket = function (packet, signature) {
 

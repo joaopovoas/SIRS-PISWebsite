@@ -55,13 +55,16 @@ def verify_transaction(transactionID):
 
     print(transaction)
 
+    if transaction.paidbyemail != "UNPAID":
+        return False
+
     if not transaction:
         return False
     return True
 
 
 async def informMerchant(transactionID):
-    currentTimestamp = getTimestamp() - 500
+    currentTimestamp = getTimestamp() - 5000
     private_key = ''
 
     with open("/code/webapp/certs/pis.key", "rb") as key_file:
@@ -111,7 +114,7 @@ async def informMerchant(transactionID):
 
 
 async def bankMock(price, currency, bankAccount, email, password):
-    currentTimestamp = getTimestamp() - 500
+    currentTimestamp = getTimestamp() - 5000
     private_key = ''
 
     with open("/code/webapp/certs/pis.key", "rb") as key_file:
@@ -164,7 +167,7 @@ async def bankMock(price, currency, bankAccount, email, password):
 
 
 async def clientHandler(websocket):
-    currentTimestamp = getTimestamp() - 500
+    currentTimestamp = getTimestamp() - 5000
     private_key = ''
     with open("/code/webapp/certs/pis.key", "rb") as key_file:
         private_key = load_pem_private_key(key_file.read(), None)
